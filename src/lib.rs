@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with udev-rs; If not, see <http://www.gnu.org/licenses/>.
 
-#![feature(unsafe_destructor, if_let, globs)]
+//#![feature(unsafe_destructor, if_let, globs)]
 
 extern crate alloc;
 extern crate libc;

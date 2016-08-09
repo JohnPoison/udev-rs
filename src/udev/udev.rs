@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with udev-rs; If not, see <http://www.gnu.org/licenses/>.
 
-use std::kinds::marker::NoSync;
-use std::io::IoError;
+use std::io::Error;
+use std::path::Path;
 
 use libc::{
     fcntl,
@@ -45,7 +45,7 @@ use udev::enumerator::Enumerator;
 
 pub struct Udev {
     // Not thread safe. As all children will hold a reference, this makes everything safe.
-    nosync: NoSync,
+    //nosync: Sized,
     udev: libudev_c::udev
 }
 
@@ -57,16 +57,16 @@ impl Udev {
         if udev.is_null() {
             oom();
         }
-        Udev { nosync: NoSync, udev: udev }
+        Udev { udev: udev }
     }
 
-    fn create_monitor(&self, name: &str) -> Result<Monitor, IoError>  {
+    fn create_monitor(&self, name: &str) -> Result<Monitor, Error>  {
         let monitor = match name.with_c_str(|name| util::check_errno(|| unsafe {
             libudev_c::udev_monitor_new_from_netlink(self.udev, name)
         })) {
             Ok(Some(monitor))       => monitor,
             Err(EINVAL) | Ok(None)  => panic!("BUG"),
-            Err(e)                  => return Err(IoError::from_errno(e as uint, true))
+            Err(e)                  => return Err(Error::from_raw_os_error(e as i32), true)
         };
         let fd = unsafe {
             libudev_c::udev_monitor_get_fd(monitor)
@@ -76,7 +76,7 @@ impl Udev {
         if old_val == -1 || unsafe { fcntl(fd, F_SETFL, old_val & !O_NONBLOCK) == -1 } {
             return match util::get_errno() {
                 ENOMEM | EINVAL => panic!("BUG"),
-                e => Err(IoError::from_errno(e as uint, true))
+                e => Err(Error::from_raw_os_error(e as i32, true))
             }
         }
 
@@ -88,7 +88,7 @@ impl Udev {
     /// # Error
     ///
     /// This will return an error if you're running in an environment without access to netlink.
-    pub fn monitor(&self) -> Result<Monitor, IoError> {
+    pub fn monitor(&self) -> Result<Monitor, Error> {
         self.create_monitor("udev")
     }
 
@@ -111,7 +111,7 @@ impl Udev {
     /// > are sent out after udev has finished its event processing,
     /// > all rules have been processed, and needed device nodes are
     /// > created.
-    pub unsafe fn monitor_kernel(&self) -> Result<Monitor, IoError> {
+    pub unsafe fn monitor_kernel(&self) -> Result<Monitor, Error> {
         self.create_monitor("kernel")
     }
 

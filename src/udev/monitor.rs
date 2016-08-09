@@ -31,7 +31,7 @@ pub struct Monitor<'u> {
     monitor: libudev_c::udev_monitor
 }
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub enum Action {
     Add,
     Remove,
@@ -42,7 +42,7 @@ pub enum Action {
     Other(String)
 }
 
-#[deriving(Show)]
+#[derive(Debug)]
 pub struct Event {
     pub action: Action,
     pub seqnum: u64
@@ -122,7 +122,6 @@ impl<'u> Monitor<'u> {
     }
 }
 
-#[unsafe_destructor]
 impl<'u> Drop for Monitor<'u> {
     fn drop(&mut self) {
         unsafe {

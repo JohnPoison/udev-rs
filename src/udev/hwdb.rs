@@ -73,7 +73,6 @@ impl<'h, 'u> Query<'h, 'u> {
     }
 }
 
-#[unsafe_destructor]
 impl<'u> Drop for Hwdb<'u> {
     fn drop(&mut self) {
         unsafe { libudev_c::udev_hwdb_unref(self.hwdb) };

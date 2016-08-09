@@ -66,7 +66,7 @@ pub fn set_errno(value: c_int) {
     }
 }
 
-pub fn check_errno<I, T: ptr::RawPtr<I>>(f: || -> T) -> Result<Option<T>, c_int> {
+pub fn check_errno<I, T: ptr::RawPtr<I>>(f: Fn() -> T) -> Result<Option<T>, c_int> {
     set_errno(0);
     let result = f();
     if result.is_null() {

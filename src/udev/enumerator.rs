@@ -225,7 +225,6 @@ impl<'u> Enumerator<'u> {
 
 }
 
-#[unsafe_destructor]
 impl<'p> Drop for Enumerator<'p> {
     fn drop(&mut self) {
         unsafe {

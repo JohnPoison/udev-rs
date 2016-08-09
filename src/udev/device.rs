@@ -16,7 +16,8 @@
 // along with udev-rs; If not, see <http://www.gnu.org/licenses/>.
 
 use std::ptr;
-use std::io::{IoError, standard_error, FileNotFound};
+use std::path::Path;
+use std::io::{Error, ErrorKind, Stderr};
 use std::fmt;
 use std::time::Duration;
 
@@ -98,23 +99,23 @@ impl<'u> Device<'u> {
     }
 
     /// Read a sysfs attribute.
-    pub fn attribute<'s>(&'s self, attr: &str) -> Result<&'s str, IoError> {
+    pub fn attribute<'s>(&'s self, attr: &str) -> Result<&'s str, Error> {
         match attr.with_c_str(|cstr| util::check_errno(|| unsafe {
             libudev_c::udev_device_get_sysattr_value(self.dev, cstr)
         })) {
             Ok(Some(val)) => Ok(unsafe { util::c_to_str(val) }.unwrap()),
-            Ok(None) => Err(standard_error(FileNotFound)),
-            Err(errno) => Err(IoError::from_errno(errno as uint, true)),
+            Ok(None) => Err(Error::new(ErrorKind::NotFound)),
+            Err(errno) => Err(Error::from_raw_os_error(errno as i32, true)),
         }
     }
 
     /// Write a sysfs attribute.
-    pub fn set_attribute(&self, attr: &str, value: &str) -> Result<(), IoError> {
+    pub fn set_attribute(&self, attr: &str, value: &str) -> Result<(), Error> {
         attr.with_c_str(|attr| value.with_c_str(|value| match unsafe {
             libudev_c::udev_device_set_sysattr_value(self.dev, attr, value)
         } {
             0           => Ok(()),
-            n if n < 0  => Err(IoError::from_errno(-n as uint, true)),
+            n if n < 0  => Err(Error::from_raw_os_error(-n as i32, true)),
             _           => panic!("udev returned an invalid error")
         }))
     }
@@ -248,7 +249,6 @@ impl<'u> Device<'u> {
     }
 }
 
-#[unsafe_destructor]
 impl<'u> Drop for Device<'u> {
     fn drop(&mut self) {
         unsafe { libudev_c::udev_device_unref(self.dev) };

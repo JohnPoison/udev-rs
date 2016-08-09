@@ -28,12 +28,12 @@ use udev::{
 // When rust finally adds that feature, I can get rid of most of this file...
 
 // Create private.
-pub struct UdevIterator<'p, Sized? T: 'p> {
+pub struct UdevIterator<'p, T: 'p> {
     parent: &'p T,
     entry: libudev_c::udev_list_entry
 }
 
-impl<'p, Sized? T> Iterator<(&'p T, &'p str, Option<&'p str>)> for UdevIterator<'p, T> {
+impl<'p, T> Iterator<(&'p T, &'p str, Option<&'p str>)> for UdevIterator<'p, T> {
     fn next(&mut self) -> Option<(&'p T, &'p str, Option<&'p str>)> {
         if self.entry.is_null() {
             None
@@ -49,7 +49,7 @@ impl<'p, Sized? T> Iterator<(&'p T, &'p str, Option<&'p str>)> for UdevIterator<
     }
 }
 
-pub unsafe fn iterator<'a, Sized? T: 'a>(parent: &'a T, entry: libudev_c::udev_list_entry) -> UdevIterator<'a, T> {
+pub unsafe fn iterator<'a, T: 'a>(parent: &'a T, entry: libudev_c::udev_list_entry) -> UdevIterator<'a, T> {
     UdevIterator {
         parent: parent,
         entry: entry,
